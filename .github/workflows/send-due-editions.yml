@@ -1,0 +1,23 @@
+# Vercel Hobby allows only daily crons. This workflow hits your app hourly
+# so each subscriber still gets their edition at 9:30 AM local time.
+#
+# GitHub repo → Settings → Secrets and variables → Actions:
+#   APP_URL          = https://your-app.vercel.app  (no trailing slash)
+#   CRON_SECRET      = same value as in Vercel env vars
+
+name: Send due Desk Edition briefings
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+jobs:
+  send-due:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger send-due-editions
+        run: |
+          curl -fsS --retry 2 --retry-delay 10 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.APP_URL }}/api/cron/send-due-editions"

@@ -64,6 +64,10 @@ NEXT_PUBLIC_APP_URL=https://YOUR-NGROK-URL.ngrok-free.app
 
 Restart `npm run dev`, then send the **ngrok https URL** (not 127.0.0.1).
 
+## Morning email cron (Vercel Hobby)
+
+Hobby cannot run hourly Vercel crons. Use **GitHub Actions** (see `docs/CRON_HOBBY.md`) or testers use the **web briefing** only.
+
 ## Troubleshooting for testers
 
 | Issue | Fix |
