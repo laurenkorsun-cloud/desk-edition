@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #faf8f4;
+  --card: #f3efe6;
+  --ink: #1c1916;
+  --ink-soft: #3d3832;
+  --muted: #6b6358;
+  --border: #e5ddd0;
+  --accent: #1a3a2a;
+  --accent-hover: #245238;
+  --gold: #c4a574;
+  --gold-dark: #8b6914;
+  --background: var(--paper);
+  --foreground: var(--ink);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-source-sans);
+  --font-display: var(--font-newsreader);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141210;
+    --card: #1e1b17;
+    --ink: #f5f0e8;
+    --ink-soft: #c9c0b4;
+    --muted: #9a9084;
+    --border: #2e2a24;
+    --accent: #3d8b65;
+    --accent-hover: #4fa67a;
+    --gold: #c4a574;
+    --gold-dark: #d4b87a;
+    --background: var(--paper);
+    --foreground: var(--ink);
+  }
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-source-sans), system-ui, sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-newsreader), Georgia, serif;
+}
+
+/* Personal briefing (W1 / T1 / G3 / D2) */
+.briefing-root {
+  --briefing-bg: #f7f6f3;
+  --briefing-ink: #1c1916;
+  --briefing-muted: #6b6358;
+  --briefing-green: #1a3a2a;
+  --briefing-green-hover: #245238;
+  background: var(--briefing-bg);
+  color: var(--briefing-ink);
+  min-height: 100vh;
+}
