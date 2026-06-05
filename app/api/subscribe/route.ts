@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import { getConfigStatus } from "@/lib/env-config";
 import {
   createPendingSubscriber,
   getSubscriberByEmail,
@@ -8,7 +9,26 @@ import {
 } from "@/lib/subscribers";
 import { sendConfirmEmail, isResendConfigured } from "@/lib/email";
 import { createServiceClient } from "@/lib/supabase";
-import { redirectForSubscriber, getSubscriberUrls } from "@/lib/subscriber-urls";
+import {
+  redirectForSubscriber,
+  relativeRedirectForSubscriber,
+  getSubscriberUrls,
+} from "@/lib/subscriber-urls";
+
+function subscribePayload(subscriber: {
+  unsubscribe_token: string;
+  onboarding_completed?: boolean;
+}) {
+  const urls = getSubscriberUrls(subscriber.unsubscribe_token);
+  return {
+    token: subscriber.unsubscribe_token,
+    redirectPath: relativeRedirectForSubscriber(subscriber),
+    redirectUrl: redirectForSubscriber(subscriber),
+    onboardingUrl: urls.onboardingUrl,
+    settingsUrl: urls.settingsUrl,
+    personalUrl: urls.personalUrl,
+  };
+}
 
 const BodySchema = z.object({
   email: z.string().email(),
@@ -16,8 +36,14 @@ const BodySchema = z.object({
 
 export async function POST(request: Request) {
   if (!isSupabaseConfigured()) {
+    const { missing } = getConfigStatus();
     return NextResponse.json(
-      { error: "Service not configured. Add Supabase env vars." },
+      {
+        error:
+          "Database not configured on this server. Add Supabase env vars in Vercel (or run npm run env:sync-vercel from your laptop).",
+        missing,
+        health: "/api/health",
+      },
       { status: 503 }
     );
   }
@@ -29,12 +55,10 @@ export async function POST(request: Request) {
     let subscriber = await getSubscriberByEmail(email);
 
     if (subscriber?.status === "active") {
-      const urls = getSubscriberUrls(subscriber.unsubscribe_token);
       return NextResponse.json({
         message: "Welcome back—opening your briefing.",
-        redirectUrl: redirectForSubscriber(subscriber),
-        settingsUrl: urls.settingsUrl,
         alreadySubscribed: true,
+        ...subscribePayload(subscriber),
       });
     }
 
@@ -67,15 +91,10 @@ export async function POST(request: Request) {
       .single();
 
     const row = activeSub ?? subscriber;
-    const urls = getSubscriberUrls(row.unsubscribe_token);
 
     return NextResponse.json({
-      message: row.onboarding_completed
-        ? "You're subscribed—opening your briefing."
-        : "You're subscribed—set up your briefing now.",
-      redirectUrl: redirectForSubscriber(row),
-      onboardingUrl: urls.onboardingUrl,
-      settingsUrl: urls.settingsUrl,
+      message: "You're subscribed—opening your briefing.",
+      ...subscribePayload(row),
     });
   } catch (err) {
     if (err instanceof z.ZodError) {

@@ -5,12 +5,14 @@ import { getActiveLenses, getActiveModules } from "@/lib/config-db";
 import { generatePersonalEditionForSubscriber } from "@/lib/generate-personal-edition";
 import { getPersonalEditionByToken } from "@/lib/personal-editions";
 import { slugToday } from "@/lib/subscriber-urls";
+import { formatErrorMessage } from "@/lib/utils";
 
 const SaveSchema = z.object({
   token: z.string().uuid(),
   primary_lens_slug: z.string(),
   secondary_lens_slug: z.string().nullable().optional(),
   timezone: z.string(),
+  delivery_time: z.string().optional(),
   city: z.string().nullable().optional(),
   manual_calendar_notes: z.string().nullable().optional(),
   spotify_playlist_url: z.string().nullable().optional(),
@@ -67,7 +69,8 @@ export async function POST(request: Request) {
     if (err instanceof z.ZodError) {
       return NextResponse.json({ error: err.message }, { status: 400 });
     }
-    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("Profile save failed:", err);
+    const message = formatErrorMessage(err);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

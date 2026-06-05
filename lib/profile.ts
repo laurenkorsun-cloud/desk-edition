@@ -65,6 +65,7 @@ export async function saveProfile(params: {
   primary_lens_slug: string;
   secondary_lens_slug?: string | null;
   timezone: string;
+  delivery_time?: string;
   city?: string | null;
   manual_calendar_notes?: string | null;
   spotify_playlist_url?: string | null;
@@ -84,6 +85,9 @@ export async function saveProfile(params: {
       primary_lens_slug: params.primary_lens_slug,
       secondary_lens_slug: params.secondary_lens_slug ?? null,
       timezone: params.timezone,
+      ...(params.delivery_time
+        ? { delivery_time: params.delivery_time }
+        : {}),
       city: params.city ?? null,
       manual_calendar_notes: params.manual_calendar_notes ?? null,
       spotify_playlist_url: params.spotify_playlist_url ?? null,
@@ -98,12 +102,19 @@ export async function saveProfile(params: {
 
   if (error) throw error;
 
+  const activeModules = await getActiveModules();
+  const validSlugs = new Set(activeModules.map((m) => m.slug));
+
   for (const [module_slug, enabled] of Object.entries(params.toggles)) {
-    await supabase.from("subscriber_module_toggles").upsert({
-      subscriber_id: sub.id,
-      module_slug,
-      enabled,
-    });
+    if (!validSlugs.has(module_slug)) continue;
+    const { error: toggleError } = await supabase
+      .from("subscriber_module_toggles")
+      .upsert({
+        subscriber_id: sub.id,
+        module_slug,
+        enabled,
+      });
+    if (toggleError) throw toggleError;
   }
 
   return data as SubscriberProfile;

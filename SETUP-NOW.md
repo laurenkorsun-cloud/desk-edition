@@ -1,6 +1,14 @@
 # Do these 3 things (only you can) — ~5 minutes
 
-Your app is running. Supabase keys are still placeholders — subscribe/onboarding will fail until you paste real keys.
+Your app is running locally when `.env.local` has real Supabase keys.
+
+**Testers on Vercel** see “Service not configured” until you sync env to Vercel:
+
+```bash
+npx vercel login && npm run env:sync-vercel && npx vercel --prod
+```
+
+See `docs/VERCEL-ENV.md` for manual steps.
 
 ## 1. Paste Supabase keys
 

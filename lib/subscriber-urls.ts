@@ -14,14 +14,18 @@ export function getSubscriberUrls(unsubscribeToken: string) {
   };
 }
 
+/** Today hub — use after home save or onboarding finish. */
+export function briefingPathForToken(token: string, date?: string) {
+  return `/me/${token}/${date ?? slugToday()}`;
+}
+
 export function relativeRedirectForSubscriber(subscriber: {
   unsubscribe_token: string;
   onboarding_completed?: boolean;
 }) {
   const { unsubscribe_token, onboarding_completed } = subscriber;
-  const today = slugToday();
   return onboarding_completed
-    ? `/me/${unsubscribe_token}/${today}`
+    ? briefingPathForToken(unsubscribe_token)
     : `/onboarding?token=${unsubscribe_token}`;
 }
 

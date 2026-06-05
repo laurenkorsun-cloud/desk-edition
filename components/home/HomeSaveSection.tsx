@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { loadDemo, demoToProfilePayload } from "@/lib/demo-storage";
+import { briefingPathForToken } from "@/lib/subscriber-urls";
 
 export function HomeSaveSection() {
   const [email, setEmail] = useState("");
@@ -24,45 +25,36 @@ export function HomeSaveSection() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Subscribe failed");
 
-      const redirect =
-        data.redirectUrl ?? data.onboardingUrl ?? data.personalUrl;
-      const tokenMatch =
-        redirect?.match(/token=([^&]+)/) ??
-        redirect?.match(/\/me\/([^/]+)\//);
-      const token = tokenMatch?.[1];
+      // Email confirm required — no dashboard until they click the link
+      if (!data.token) {
+        setStatus("success");
+        setMessage(data.message);
+        return;
+      }
 
-      if (redirect && token) {
-        const prefs = loadDemo();
-        const payload = demoToProfilePayload(prefs);
-        setMessage("Building your first briefing…");
-        const profileRes = await fetch("/api/profile", {
+      const token = data.token as string;
+      const prefs = loadDemo();
+      const payload = demoToProfilePayload(prefs);
+      setMessage("Building your first briefing…");
+      const profileRes = await fetch("/api/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, ...payload }),
+      });
+      if (!profileRes.ok) {
+        const err = await profileRes.json();
+        throw new Error(err.error ?? "Could not save preferences");
+      }
+      const profileData = await profileRes.json();
+      if (!profileData.editionReady) {
+        await fetch("/api/me/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token, ...payload }),
+          body: JSON.stringify({ token }),
         });
-        if (!profileRes.ok) {
-          const err = await profileRes.json();
-          throw new Error(err.error ?? "Could not save preferences");
-        }
-        const profileData = await profileRes.json();
-        if (!profileData.editionReady) {
-          await fetch("/api/me/generate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ token }),
-          });
-        }
-        window.location.href = redirect;
-        return;
       }
-
-      if (redirect) {
-        window.location.href = redirect;
-        return;
-      }
-
-      setStatus("success");
-      setMessage(data.message);
+      window.location.assign(briefingPathForToken(token));
+      return;
     } catch (err) {
       setStatus("error");
       setMessage(err instanceof Error ? err.message : "Something went wrong");

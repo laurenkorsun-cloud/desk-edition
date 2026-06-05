@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { briefingPathForToken } from "@/lib/subscriber-urls";
 
 type Lens = { slug: string; name: string };
 type Module = {
@@ -96,7 +97,7 @@ export function ProfileForm({
             body: JSON.stringify({ token }),
           });
         }
-        window.location.href = `/me/${token}/${new Date().toISOString().slice(0, 10)}`;
+        window.location.assign(briefingPathForToken(token));
         return;
       }
 

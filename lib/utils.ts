@@ -2,6 +2,16 @@ export function getAppUrl() {
   return process.env.NEXT_PUBLIC_APP_URL ?? "http://127.0.0.1:4000";
 }
 
+/** Surface Supabase/Postgres errors instead of a generic "Unknown error". */
+export function formatErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === "object" && err !== null && "message" in err) {
+    const msg = (err as { message: unknown }).message;
+    if (typeof msg === "string" && msg.trim()) return msg;
+  }
+  return "Unknown error";
+}
+
 export function verifyCronSecret(request: Request): boolean {
   const secret = process.env.CRON_SECRET;
   if (!secret) return false;

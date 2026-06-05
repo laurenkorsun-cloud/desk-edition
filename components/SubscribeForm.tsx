@@ -25,8 +25,13 @@ export function SubscribeForm() {
       setStatus("success");
       setMessage(data.message);
       setEmail("");
-      if (data.onboardingUrl) {
-        window.location.href = data.onboardingUrl;
+      const next =
+        data.redirectPath ??
+        (data.token
+          ? `/me/${data.token}/${new Date().toISOString().slice(0, 10)}`
+          : null);
+      if (next) {
+        window.location.assign(next);
         return;
       }
     } catch (err) {
