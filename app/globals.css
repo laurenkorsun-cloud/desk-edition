@@ -49,14 +49,19 @@ body {
   font-family: var(--font-newsreader), Georgia, serif;
 }
 
-/* Personal briefing (W1 / T1 / G3 / D2) */
+/* Personal briefing — aligned with sample edition tokens */
 .briefing-root {
-  --briefing-bg: #f7f6f3;
-  --briefing-ink: #1c1916;
-  --briefing-muted: #6b6358;
-  --briefing-green: #1a3a2a;
-  --briefing-green-hover: #245238;
+  --briefing-bg: var(--paper);
+  --briefing-ink: var(--ink);
+  --briefing-muted: var(--muted);
+  --briefing-green: var(--accent);
+  --briefing-green-hover: var(--accent-hover);
   background: var(--briefing-bg);
   color: var(--briefing-ink);
   min-height: 100vh;
+  font-family: var(--font-source-sans), system-ui, sans-serif;
+}
+
+.briefing-root .font-display {
+  font-family: var(--font-newsreader), Georgia, serif;
 }

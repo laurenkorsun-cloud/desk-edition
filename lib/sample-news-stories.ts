@@ -20,6 +20,8 @@ export const SAMPLE_WORLD_NEWS: Story[] = [
       "If you serve multinational clients, managers will ask whether regional headlines are changing delivery, pricing, or compliance scope—having lane-level examples ready sounds prepared.",
     sourceUrl: "https://www.bbc.com/news/world",
     sourceName: "BBC World",
+    imageUrl:
+      "https://ichef.bbci.co.uk/ace/standard/480/cpsprodpb/3a6e/live/d52d0df0-6100-11f1-ae0d-afcc10479766.jpg",
   }),
   article({
     headline: "Energy and commodity prices still shape inflation narratives",
@@ -33,6 +35,8 @@ export const SAMPLE_WORLD_NEWS: Story[] = [
       "When someone says inflation is cooling, ask which input line item is still moving—energy, logistics, or labor—so you sound analytical, not argumentative.",
     sourceUrl: "https://www.reuters.com/world/",
     sourceName: "Reuters",
+    imageUrl:
+      "https://ichef.bbci.co.uk/ace/standard/480/cpsprodpb/590d/live/6821ba00-60f9-11f1-8b8c-6d33e1d5abb6.jpg",
   }),
   article({
     headline: "Election-year policy signals ripple through regulated industries",

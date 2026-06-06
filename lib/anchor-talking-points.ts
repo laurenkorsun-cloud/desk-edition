@@ -1,4 +1,8 @@
+import { NEWS_TARGET_ARTICLES } from "@/config/news-editorial";
 import type { PersonalEditionContent } from "@/lib/config-types";
+import { buildNewsTalkingPoint } from "@/lib/news-story-display";
+import { buildMarketTalkingPoint } from "@/lib/markets-story-display";
+import { buildIndustryTalkingPoint } from "@/lib/industry-story-display";
 import type { Story } from "@/lib/types";
 import type { BriefingCategory } from "@/config/briefing-nav";
 
@@ -20,7 +24,7 @@ function getStoriesForCategory(
             !/interesting|culture/i.test(s.name)
         )
         .flatMap((s) => s.stories);
-      if (primary.length >= 6) return primary;
+      if (primary.length >= 4) return primary;
       const broader = sections
         .filter((s) => !/business|market/i.test(s.name))
         .flatMap((s) => s.stories);
@@ -112,13 +116,9 @@ function buildCategoryPoints(
 ): string[] {
   switch (category) {
     case "news":
-      return getStoriesForCategory(content, "news")
-        .slice(0, 3)
-        .map((s) => pointFromStory(s, lensLabel));
+      return [];
     case "markets":
-      return getStoriesForCategory(content, "markets")
-        .slice(0, 2)
-        .map((s) => pointFromStory(s, lensLabel));
+      return [];
     case "industry": {
       const mod = pointFromModule("industry_lens", content, lensLabel);
       const stories = getStoriesForCategory(content, "industry").slice(0, 1);
@@ -150,6 +150,12 @@ function buildCategoryPoints(
       return pointFromModule("historical_fact", content, lensLabel);
     case "vacation":
       return pointFromModule("vacation_planning", content, lensLabel);
+    case "commute":
+      return pointFromModule("commute", content, lensLabel);
+    case "sports":
+      return pointFromModule("sports_scores", content, lensLabel);
+    case "podcast":
+      return pointFromModule("podcast_pick", content, lensLabel);
     default:
       return [];
   }
@@ -194,6 +200,9 @@ export function anchorTalkingPoints(
     hobbies: "hobbies",
     historical: "historical_fact",
     vacation: "vacation_planning",
+    commute: "commute",
+    sports: "sports_scores",
+    podcast: "podcast_pick",
   };
 
   const byCategory: Record<string, string[]> = {
@@ -226,7 +235,52 @@ export function anchorTalkingPoints(
       }
     }
 
-    byCategory[cat] = merged.slice(0, 2);
+    byCategory[cat] =
+      cat === "news" || cat === "markets" || cat === "industry"
+        ? []
+        : merged.slice(0, 2);
+  }
+
+  const newsStories = getStoriesForCategory(content, "news").slice(
+    0,
+    NEWS_TARGET_ARTICLES
+  );
+  let sections = content.sections;
+  if (enabled.has("news") && newsStories.length > 0) {
+    const newsHeadlines = new Set(newsStories.map((n) => n.headline));
+    sections = sections.map((section) => {
+      if (/business|market/i.test(section.name)) return section;
+      return {
+        ...section,
+        stories: section.stories.map((st) => {
+          if (!newsHeadlines.has(st.headline)) return st;
+          return {
+            ...st,
+            talkingPoint:
+              st.talkingPoint ?? buildNewsTalkingPoint(st, lens),
+          };
+        }),
+      };
+    });
+  }
+
+  if (enabled.has("markets")) {
+    const marketStories = getStoriesForCategory(content, "markets");
+    const marketHeadlines = new Set(marketStories.map((n) => n.headline));
+    sections = sections.map((section) => {
+      if (!/business|market/i.test(section.name)) return section;
+      return {
+        ...section,
+        stories: section.stories.map((st) => {
+          if (!marketHeadlines.has(st.headline)) return st;
+          return {
+            ...st,
+            talkingPoint:
+              st.talkingPoint ?? buildMarketTalkingPoint(st, lens),
+          };
+        }),
+      };
+    });
   }
 
   const flat = Object.values(byCategory).flat();
@@ -242,6 +296,7 @@ export function anchorTalkingPoints(
 
   return {
     ...content,
+    sections,
     talkingPointsByCategory: byCategory,
     talkingPoints: talkingPoints.length > 0 ? talkingPoints : flat.slice(0, 5),
   };

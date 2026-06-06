@@ -10,8 +10,8 @@ Rules:
 
 talkingPointsByCategory — 2 points per enabled category:
 - news: each point must name a World or Policy story headline from this edition and reference a fact from its synopsis
-- markets: reference a Business & markets story with a specific move (index, rate, company, %)
-- industry: reference industry_lens module text OR an industry-relevant story from today
+- markets: each point must cite a specific move (index, rate, company, %) and be a question or observation an educated intern could raise—not a script to memorize
+- industry: reference industry_lens module text OR an industry-relevant story from today — wording must match the reader's primary lens (not generic "at work")
 - weather: reference today's weather data or weather module
 - calendar: reference their calendar notes or today's schedule module
 - music / books / movies / clothing_sales / hobbies / vacation / historical: reference that module's item headline from today

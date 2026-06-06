@@ -15,6 +15,10 @@ export type PreviewSample = {
 
 function buildFallback(prefs: DemoPreferences): PreviewSample {
   const lens = DEMO_LENSES.find((l) => l.slug === prefs.primaryLens)?.name ?? "your field";
+  const hobbies = [
+    ...prefs.hobbies,
+    ...(prefs.customHobby.trim() ? [prefs.customHobby.trim()] : []),
+  ];
   const enabled = DEMO_MODULES.filter((m) => prefs.modules[m.slug]).map((m) => m.name);
   const tone =
     prefs.contentTone < 33 ? "straight" : prefs.contentTone > 66 ? "witty" : "balanced";
@@ -30,12 +34,19 @@ function buildFallback(prefs: DemoPreferences): PreviewSample {
     });
   }
   if (prefs.modules.markets) {
+    const marketLine =
+      lens === "Medical"
+        ? "Biotech and health-system equities in focus—relevant if hospital finance comes up."
+        : lens === "Nonprofit"
+          ? "Endowment and muni markets matter more than mega-cap tech for many mission-driven orgs."
+          : lens === "Technology"
+            ? "Mega-cap tech and AI capex still set the tone—watch hyperscaler earnings commentary."
+            : lens === "Audit" || lens === "Tax"
+              ? "Rates and deal flow headlines help you follow what audit and tax clients care about."
+              : "Indices mixed overnight; rates and earnings commentary driving the narrative.";
     sections.push({
       title: "Markets",
-      lines: [
-        "Indices mixed overnight; rates and earnings commentary driving the narrative.",
-        "Watch mega-cap tech and Fed speakers for the tone of the day.",
-      ],
+      lines: [marketLine],
     });
   }
   if (prefs.modules.weather && prefs.city) {
@@ -76,13 +87,63 @@ function buildFallback(prefs: DemoPreferences): PreviewSample {
       ],
     });
   }
+  if (prefs.modules.commute) {
+    sections.push({
+      title: "Commute",
+      lines: ["Transit and traffic notes for your morning route."],
+    });
+  }
+  if (prefs.modules.sports_scores) {
+    sections.push({
+      title: "Sports",
+      lines: ["Last night's scores and headlines worth a quick glance."],
+    });
+  }
+  if (prefs.modules.podcast_pick) {
+    sections.push({
+      title: "Podcast",
+      lines: ["One episode recommendation for the commute."],
+    });
+  }
+  if (prefs.modules.vacation_planning) {
+    sections.push({
+      title: "Vacation planning",
+      lines: ["Weekend getaway ideas and travel prompts."],
+    });
+  }
+  if (prefs.modules.historical_fact) {
+    sections.push({
+      title: "Historical fact",
+      lines: ["One surprising fact tied to today's date or news theme."],
+    });
+  }
 
   const talkingPoints = prefs.modules.talking_points
-    ? [
-        `Ask whether your ${lens} clients are reacting to today's biggest headline.`,
-        "If markets come up: 'Are deals getting repriced, or just delayed?'",
-        "Offer one hobby-related question if the conversation goes personal—it builds rapport.",
-      ]
+    ? lens === "Medical"
+      ? [
+          "Ask whether anyone is tracking today's FDA or Medicare headline before rounds.",
+          "If research funding comes up: 'Are grant timelines slipping or just reprioritized?'",
+          hobbies[0]
+            ? `Light rapport: mention something from ${hobbies[0]} if the chat goes personal.`
+            : "Offer one light personal question if the conversation opens up.",
+        ]
+      : lens === "Nonprofit"
+        ? [
+            `Ask whether today's policy headline could affect grant cycles for ${lens} partners.`,
+            "If donors come up: 'Are multi-year gifts holding, or shifting shorter?'",
+            "Connect one headline to mission impact—not just markets.",
+          ]
+        : lens === "Technology"
+          ? [
+              "If AI spend comes up, ask whether the team is building, buying, or waiting.",
+              "On today's platform headline: 'Which roadmap bet does this pressure?'",
+              "Offer one hobby-related question if the conversation goes personal.",
+            ]
+          : [
+              `Ask whether your ${lens} clients or team are reacting to today's biggest headline.`,
+              "If markets come up: 'Are deals getting repriced, or just delayed?'",
+              "Offer one hobby-related question if the conversation goes personal—it builds rapport.",
+            ]
     : [];
 
   return {

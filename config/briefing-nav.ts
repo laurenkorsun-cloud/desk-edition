@@ -1,3 +1,12 @@
+import {
+  HUB_MODULE_SLUGS,
+  isHubModuleSlug,
+  type ModuleGroup,
+} from "@/config/module-catalog";
+
+export { isHubModuleSlug, HUB_MODULE_SLUGS };
+export type { ModuleGroup };
+
 /** Top header: Today + core coverage */
 export type HeaderCategory = "news" | "markets" | "industry";
 
@@ -11,7 +20,10 @@ export type ModuleCategory =
   | "clothing_sales"
   | "hobbies"
   | "historical"
-  | "vacation";
+  | "vacation"
+  | "commute"
+  | "sports"
+  | "podcast";
 
 export type BriefingCategory = HeaderCategory | ModuleCategory;
 
@@ -28,18 +40,6 @@ export const HEADER_TABS: {
 /** @deprecated Use HEADER_TABS */
 export const PRIMARY_TABS = HEADER_TABS;
 
-/** Module slugs stored in edition content / subscriber toggles */
-export const HUB_MODULE_SLUGS = [
-  "weather",
-  "calendar",
-  "music",
-  "books",
-  "movies",
-  "clothing_sales",
-  "historical_fact",
-  "vacation_planning",
-] as const;
-
 export type HubModuleSlug = (typeof HUB_MODULE_SLUGS)[number];
 
 /** Not shown in header or as hub tiles */
@@ -49,10 +49,6 @@ export const CORE_MODULE_SLUGS = new Set([
   "talking_points",
   "industry_lens",
 ]);
-
-export function isHubModuleSlug(slug: string): slug is HubModuleSlug {
-  return (HUB_MODULE_SLUGS as readonly string[]).includes(slug);
-}
 
 /** URL segment for a module's detail page */
 export function modulePageSlug(moduleSlug: string): ModuleCategory | null {
@@ -65,6 +61,9 @@ export function modulePageSlug(moduleSlug: string): ModuleCategory | null {
     clothing_sales: "clothing_sales",
     historical_fact: "historical",
     vacation_planning: "vacation",
+    commute: "commute",
+    sports_scores: "sports",
+    podcast_pick: "podcast",
     hobbies: "hobbies",
   };
   return map[moduleSlug] ?? null;
@@ -80,6 +79,9 @@ export const MODULE_CATEGORIES: ModuleCategory[] = [
   "hobbies",
   "historical",
   "vacation",
+  "commute",
+  "sports",
+  "podcast",
 ];
 
 export const ALL_CATEGORIES: BriefingCategory[] = [
@@ -102,6 +104,9 @@ export const CATEGORY_TO_MODULE: Record<BriefingCategory, string> = {
   hobbies: "hobbies",
   historical: "historical_fact",
   vacation: "vacation_planning",
+  commute: "commute",
+  sports: "sports_scores",
+  podcast: "podcast_pick",
 };
 
 export function categoryHref(token: string, date: string, slug: string) {

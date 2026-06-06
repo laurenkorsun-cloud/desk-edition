@@ -1,4 +1,6 @@
 import { ProfileForm } from "@/components/ProfileForm";
+import { PageBackLink } from "@/components/briefing/BriefingBackLink";
+import { briefingPathForToken } from "@/lib/subscriber-urls";
 
 type Props = { searchParams: Promise<{ token?: string }> };
 
@@ -18,7 +20,11 @@ export default async function SettingsPage({ searchParams }: Props) {
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-12">
-      <h1 className="font-display text-4xl text-[var(--ink)]">Settings</h1>
+      <PageBackLink
+        href={briefingPathForToken(token)}
+        label="← Back to briefing"
+      />
+      <h1 className="mt-4 font-display text-4xl text-[var(--ink)]">Settings</h1>
       <p className="mt-2 font-sans text-[var(--muted)]">
         Change lenses, modules, city, calendar notes, or playlist anytime.
       </p>

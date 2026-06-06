@@ -1,13 +1,21 @@
-import { NEWS_SYNOPSIS_MIN_WORDS } from "@/config/news-editorial";
+import {
+  NEWS_LEDE_MAX_WORDS,
+  NEWS_SYNOPSIS_MIN_WORDS,
+} from "@/config/news-editorial";
 import type { PersonalEditionContent } from "@/lib/config-types";
+import { buildNewsTalkingPoint } from "@/lib/news-story-display";
 import type { Story } from "@/lib/types";
 
 export function wordCount(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
-/** True when story lacks a real long-form synopsis (legacy or weak LLM output). */
+/** True when story lacks a proper tiered lede (legacy long-form or weak output). */
 export function isShortSynopsis(story: Story): boolean {
+  const summary = story.summary?.trim() ?? "";
+  if (wordCount(summary) >= 25 && wordCount(summary) <= NEWS_LEDE_MAX_WORDS + 50) {
+    return false;
+  }
   const synopsis = story.synopsis?.trim() ?? "";
   if (wordCount(synopsis) >= NEWS_SYNOPSIS_MIN_WORDS) return false;
   const combined = [story.synopsis, story.description, story.summary]

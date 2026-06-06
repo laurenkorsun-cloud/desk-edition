@@ -11,6 +11,8 @@ export type SubscriberProfile = SubscriberRow & {
   manual_calendar_notes: string | null;
   spotify_playlist_url: string | null;
   onboarding_completed: boolean;
+  morning_email_enabled?: boolean;
+  watchlist_symbols?: string[];
   last_sent_on: string | null;
   hobbies?: string[];
   morning_goals?: string[];
@@ -71,6 +73,7 @@ export async function saveProfile(params: {
   spotify_playlist_url?: string | null;
   toggles: Record<string, boolean>;
   onboarding_completed?: boolean;
+  morning_email_enabled?: boolean;
   hobbies?: string[];
   morning_goals?: string[];
   content_tone?: string;
@@ -92,6 +95,9 @@ export async function saveProfile(params: {
       manual_calendar_notes: params.manual_calendar_notes ?? null,
       spotify_playlist_url: params.spotify_playlist_url ?? null,
       onboarding_completed: params.onboarding_completed ?? true,
+      ...(params.morning_email_enabled !== undefined
+        ? { morning_email_enabled: params.morning_email_enabled }
+        : {}),
       hobbies: params.hobbies ?? [],
       morning_goals: params.morning_goals ?? [],
       content_tone: params.content_tone ?? "balanced",

@@ -5,18 +5,32 @@ import type { BriefingCategory } from "@/config/briefing-nav";
 import type { SubscriberProfile } from "@/lib/profile";
 import {
   getStoriesForCategory,
+  getNewsSections,
   getCategoryTalkingPoints,
   getModuleBlock,
-  getIndustryIntro,
   normalizeContent,
 } from "@/lib/briefing-content";
 import { CategoryPageLayout } from "./CategoryPageLayout";
 import { NotionBlock } from "./NotionBlock";
-import { NewsStoryBlock } from "./NewsStoryBlock";
-import { NEWS_MIN_ARTICLES } from "@/config/news-editorial";
+import { IndustryPageView } from "@/components/industry/IndustryPageView";
+import {
+  getIndustryStories,
+  industryNeedsRegeneration,
+} from "@/lib/enrich-industry-stories";
+import { NEWS_MIN_ARTICLES, NEWS_TARGET_ARTICLES } from "@/config/news-editorial";
+import { NewsStoriesFeed } from "./NewsStoriesFeed";
 import { newsNeedsRegeneration } from "@/lib/enrich-news-stories";
 import { RegenerateNewsBanner } from "./RegenerateNewsBanner";
 import { ModuleContentView } from "./ModuleContentView";
+import { MarketsPageView } from "@/components/markets/MarketsPageView";
+import { DEFAULT_WATCHLIST } from "@/lib/stocks";
+import { categorySubtitleForLens } from "@/lib/lens-personalization";
+import {
+  enrichMarketsContent,
+  marketsNeedsRegeneration,
+  resolveMarketsMeta,
+} from "@/lib/enrich-markets-stories";
+import { categoryLabel } from "@/config/module-labels";
 import { useBookmarks } from "./useBookmarks";
 
 type Props = {
@@ -27,19 +41,11 @@ type Props = {
   lensLabel: string;
 };
 
-const TITLES: Record<BriefingCategory, string> = {
-  news: "News",
-  markets: "Markets",
-  industry: "Industry",
-  weather: "Weather",
-  calendar: "Calendar",
-  music: "Music",
-  books: "Books",
-  movies: "Movies",
-  clothing_sales: "Clothing & sales",
-  hobbies: "Hobbies",
-  historical: "Historical fact",
-  vacation: "Vacation planning",
+const CATEGORY_SUBTITLES: Partial<Record<BriefingCategory, string>> = {
+  news: "World, policy, and work—written so you can skip the links.",
+  markets: "What moved overnight and why it might come up at the office.",
+  industry: "Why today's headlines matter for your lens.",
+  hobbies: "Picks tied to the interests you chose in onboarding.",
 };
 
 export function BriefingCategoryView({
@@ -67,33 +73,17 @@ export function BriefingCategoryView({
 
   function renderBody() {
     if (category === "industry") {
-      const stories = getStoriesForCategory(c, "industry");
+      const stories = getIndustryStories(c, lensLabel);
       return (
-        <>
-          <p className="mb-10 font-sans text-[15px] leading-relaxed">
-            {getIndustryIntro(c, lensLabel)}
-          </p>
-          {stories.map((story, i) => (
-            <NotionBlock
-              key={`${story.headline}-${i}`}
-              story={story}
-              category={category}
-              bookmarkId={`story-${category}-${i}`}
-              isBookmarked={has(`story-${category}-${i}`)}
-              onBookmark={() =>
-                add({
-                  id: `story-${category}-${i}`,
-                  type: "story",
-                  title: story.headline,
-                  excerpt: story.summary,
-                  category,
-                  url: story.sourceUrl,
-                })
-              }
-              onUnbookmark={() => remove(`story-${category}-${i}`)}
-            />
-          ))}
-        </>
+        <IndustryPageView
+          stories={stories}
+          lensLabel={lensLabel}
+          token={token}
+          needsRegeneration={industryNeedsRegeneration(c, lensLabel)}
+          has={has}
+          add={add}
+          remove={remove}
+        />
       );
     }
 
@@ -146,68 +136,60 @@ export function BriefingCategoryView({
     const block = getModuleBlock(c, moduleSlug);
 
     if (category === "news") {
-      const stories = getStoriesForCategory(c, "news");
+      const sections = getNewsSections(c);
+      const stories = getStoriesForCategory(c, "news").slice(
+        0,
+        NEWS_TARGET_ARTICLES
+      );
       const needsRegen = newsNeedsRegeneration(c);
+
       return (
         <>
           {needsRegen && <RegenerateNewsBanner token={token} />}
-          <p className="mb-8 font-sans text-sm text-[var(--briefing-muted)]">
-            {stories.length} articles today
+          <p className="mb-8 font-sans text-sm text-[var(--muted)]">
+            {stories.length} top stories
             {stories.length < NEWS_MIN_ARTICLES
-              ? ` — regenerate your edition for ${NEWS_MIN_ARTICLES}+ in-depth pieces.`
-              : " — synopsis, analysis, and sources below."}
+              ? ` — regenerate for ${NEWS_TARGET_ARTICLES} tiered articles.`
+              : " — swipe on mobile, expand for depth."}
           </p>
-          {stories.map((story, i) => (
-            <NewsStoryBlock
-              key={`${story.headline}-${i}`}
-              story={story}
-              index={i}
-              bookmarkId={`story-news-${i}`}
-              isBookmarked={has(`story-news-${i}`)}
-              onBookmark={() =>
-                add({
-                  id: `story-news-${i}`,
-                  type: "story",
-                  title: story.headline,
-                  excerpt: story.synopsis ?? story.summary,
-                  category,
-                  url: story.sourceUrl,
-                })
-              }
-              onUnbookmark={() => remove(`story-news-${i}`)}
+          {stories.length > 0 ? (
+            <NewsStoriesFeed
+              stories={stories}
+              lensLabel={lensLabel}
+              category={category}
+              has={has}
+              add={add}
+              remove={remove}
             />
-          ))}
-          {stories.length === 0 && block && <ModuleContentView block={block} />}
+          ) : (
+            block && <ModuleContentView block={block} />
+          )}
         </>
       );
     }
 
     if (category === "markets") {
-      const stories = getStoriesForCategory(c, "markets");
+      const marketsContent = enrichMarketsContent(c, {
+        lensLabel,
+        lensSlug: subscriber.primary_lens_slug,
+      });
+      const stories = getStoriesForCategory(marketsContent, "markets");
+      const watchlist =
+        (subscriber as { watchlist_symbols?: string[] }).watchlist_symbols ??
+        DEFAULT_WATCHLIST;
       return (
-        <>
-          {stories.map((story, i) => (
-            <NotionBlock
-              key={`${story.headline}-${i}`}
-              story={story}
-              category={category}
-              bookmarkId={`story-markets-${i}`}
-              isBookmarked={has(`story-markets-${i}`)}
-              onBookmark={() =>
-                add({
-                  id: `story-markets-${i}`,
-                  type: "story",
-                  title: story.headline,
-                  excerpt: story.synopsis ?? story.summary,
-                  category,
-                  url: story.sourceUrl,
-                })
-              }
-              onUnbookmark={() => remove(`story-markets-${i}`)}
-            />
-          ))}
-          {stories.length === 0 && block && <ModuleContentView block={block} />}
-        </>
+        <MarketsPageView
+          stories={stories}
+          lensLabel={lensLabel}
+          token={token}
+          initialWatchlist={watchlist}
+          marketsMeta={resolveMarketsMeta(marketsContent)}
+          needsRegeneration={marketsNeedsRegeneration(marketsContent)}
+          block={block}
+          has={has}
+          add={add}
+          remove={remove}
+        />
       );
     }
 
@@ -222,9 +204,32 @@ export function BriefingCategoryView({
     );
   }
 
+  const lensSubtitle =
+    categorySubtitleForLens(category, lensLabel) ?? CATEGORY_SUBTITLES[category];
+
+  if (category === "news" || category === "markets" || category === "industry") {
+    return (
+      <div>
+        <header className="mb-10 border-b border-[var(--briefing-ink)]/[0.06] pb-8">
+          <h1 className="font-display text-3xl text-[var(--briefing-ink)] md:text-4xl">
+            <span className="text-[var(--briefing-green)]">●</span>{" "}
+            {categoryLabel(category)}
+          </h1>
+          {lensSubtitle && (
+            <p className="mt-3 max-w-2xl font-sans text-sm leading-relaxed text-[var(--briefing-muted)]">
+              {lensSubtitle}
+            </p>
+          )}
+        </header>
+        {body}
+      </div>
+    );
+  }
+
   return (
     <CategoryPageLayout
-      title={TITLES[category]}
+      title={categoryLabel(category)}
+      subtitle={lensSubtitle}
       talkingPoints={points}
       category={category}
       onBookmarkPoint={bookmarkTp}

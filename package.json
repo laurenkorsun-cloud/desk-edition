@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 4000 -H 127.0.0.1",
+    "dev": "WATCHPACK_POLLING=true next dev -p 4000 -H 127.0.0.1",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "env:sync-vercel": "node scripts/sync-vercel-env.mjs"
+    "env:sync-vercel": "node scripts/sync-vercel-env.mjs",
+    "seed:local": "node scripts/seed-local.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.107.0",

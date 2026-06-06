@@ -3,15 +3,41 @@ import type { Section, Story } from "@/lib/types";
 import type { BriefingCategory } from "@/config/briefing-nav";
 import { enrichNewsContent } from "@/lib/enrich-news-stories";
 import { anchorTalkingPoints } from "@/lib/anchor-talking-points";
+import { resolveLensDisplayName } from "@/lib/lens-personalization";
 
 export function normalizeContent(
-  raw: PersonalEditionContent
+  raw: PersonalEditionContent,
+  options?: { lensLabel?: string; lensSlug?: string | null }
 ): PersonalEditionContent {
+  const lensLabel =
+    options?.lensLabel ??
+    resolveLensDisplayName(
+      raw.meta?.primaryLensSlug ?? raw.meta?.primaryLens
+    );
   const withNews = enrichNewsContent(raw);
   return anchorTalkingPoints(withNews, {
-    lensLabel: raw.meta?.primaryLens,
+    lensLabel,
     enabledSlugs: raw.meta?.enabledModules,
   });
+}
+
+/** News page sections in sample-edition order (World, Policy & work, …). */
+export function getNewsSections(content: PersonalEditionContent): Section[] {
+  const sections = content.sections ?? [];
+  const newsSections = sections.filter(
+    (s) =>
+      /world|policy|news|work/i.test(s.name) &&
+      !/business|market|interesting|culture/i.test(s.name) &&
+      (s.stories?.length ?? 0) > 0
+  );
+
+  const rank = (name: string) => {
+    if (/^world/i.test(name)) return 0;
+    if (/policy/i.test(name)) return 1;
+    return 2;
+  };
+
+  return [...newsSections].sort((a, b) => rank(a.name) - rank(b.name));
 }
 
 export function getStoriesForCategory(
@@ -21,6 +47,9 @@ export function getStoriesForCategory(
   const sections = content.sections ?? [];
   switch (category) {
     case "news": {
+      const fromSections = getNewsSections(content).flatMap((s) => s.stories);
+      if (fromSections.length > 0) return fromSections;
+
       const primary = sections
         .filter(
           (s) =>

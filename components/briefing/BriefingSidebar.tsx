@@ -4,7 +4,9 @@ import Link from "next/link";
 import type { PersonalEditionContent } from "@/lib/config-types";
 import { normalizeContent, getModuleBlock } from "@/lib/briefing-content";
 import { categoryHref } from "@/config/briefing-nav";
+import { moduleLabel } from "@/config/module-labels";
 import type { BookmarkItem } from "./useBookmarks";
+import { SavedBookmarksList } from "./SavedBookmarksList";
 
 type Props = {
   token: string;
@@ -12,6 +14,7 @@ type Props = {
   content: PersonalEditionContent;
   bookmarks: BookmarkItem[];
   deliveryLabel: string;
+  onRemoveBookmark?: (id: string) => void;
 };
 
 export function BriefingSidebar({
@@ -20,23 +23,24 @@ export function BriefingSidebar({
   content,
   bookmarks,
   deliveryLabel,
+  onRemoveBookmark,
 }: Props) {
   const c = normalizeContent(content);
   const weather = getModuleBlock(c, "weather");
 
   return (
-    <aside className="hidden w-56 shrink-0 flex-col gap-8 border-r border-transparent pr-6 md:flex lg:w-64">
+    <aside className="hidden w-56 shrink-0 flex-col gap-8 border-r border-[var(--briefing-ink)]/[0.06] pr-6 md:flex lg:w-64">
       {weather && (
         <div>
           <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--briefing-muted)]">
-            Weather
+            {moduleLabel("weather")}
           </p>
-          <p className="mt-3 font-sans text-sm leading-relaxed line-clamp-4">
+          <p className="mt-3 font-sans text-sm leading-relaxed text-[var(--briefing-ink-soft)] line-clamp-4">
             {weather.body.split("\n")[0]}
           </p>
           <Link
             href={categoryHref(token, date, "weather")}
-            className="mt-2 inline-block text-xs text-[var(--briefing-green)] hover:underline"
+            className="mt-2 inline-block font-sans text-xs text-[var(--briefing-green)] hover:underline"
           >
             Full forecast →
           </Link>
@@ -44,25 +48,29 @@ export function BriefingSidebar({
       )}
 
       <div>
-        <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--briefing-muted)]">
-          Saved ({bookmarks.length})
-        </p>
-        {bookmarks.length === 0 ? (
-          <p className="mt-3 font-sans text-xs text-[var(--briefing-muted)]">
-            Bookmark stories or talking points from any page.
+        <div className="flex items-baseline justify-between gap-2">
+          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--briefing-muted)]">
+            Saved ({bookmarks.length})
           </p>
-        ) : (
-          <ul className="mt-3 space-y-2">
-            {bookmarks.slice(0, 5).map((b) => (
-              <li key={b.id} className="font-sans text-xs leading-snug">
-                <span className="text-[var(--briefing-green)]">{b.category}</span>
-                {" · "}
-                {b.title.slice(0, 40)}
-                {b.title.length > 40 ? "…" : ""}
-              </li>
-            ))}
-          </ul>
-        )}
+          {bookmarks.length > 0 && (
+            <Link
+              href={`/me/${token}/${date}/saved`}
+              className="font-sans text-[10px] text-[var(--briefing-green)] hover:underline"
+            >
+              View all
+            </Link>
+          )}
+        </div>
+        <div className="mt-3">
+          <SavedBookmarksList
+            bookmarks={bookmarks}
+            token={token}
+            date={date}
+            limit={5}
+            compact
+            onRemove={onRemoveBookmark}
+          />
+        </div>
       </div>
 
       <div className="mt-auto space-y-2 font-sans text-xs text-[var(--briefing-muted)]">

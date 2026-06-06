@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { saveSubscriberToken } from "@/lib/subscriber-session";
 
 export function SubscribeForm() {
   const [email, setEmail] = useState("");
@@ -22,18 +23,16 @@ export function SubscribeForm() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Something went wrong");
-      setStatus("success");
-      setMessage(data.message);
-      setEmail("");
-      const next =
-        data.redirectPath ??
-        (data.token
-          ? `/me/${data.token}/${new Date().toISOString().slice(0, 10)}`
-          : null);
-      if (next) {
+      if (data.token) {
+        const next =
+          data.redirectPath ??
+          `/onboarding?token=${data.token}`;
         window.location.assign(next);
         return;
       }
+      setStatus("success");
+      setMessage(data.message);
+      setEmail("");
     } catch (err) {
       setStatus("error");
       setMessage(err instanceof Error ? err.message : "Failed to subscribe");
@@ -57,9 +56,13 @@ export function SubscribeForm() {
           disabled={status === "loading"}
           className="whitespace-nowrap bg-[var(--accent)] px-6 py-3 font-sans text-sm font-medium text-white hover:bg-[var(--accent-hover)] disabled:opacity-60"
         >
-          {status === "loading" ? "Joining…" : "Get the briefing"}
+          {status === "loading" ? "Continuing…" : "Continue"}
         </button>
       </div>
+      <p className="mt-3 font-sans text-xs text-[var(--muted)]">
+        Already set up? Enter the same email—we&apos;ll take you to your
+        briefing.
+      </p>
       {message && (
         <p
           className={`mt-3 font-sans text-sm ${

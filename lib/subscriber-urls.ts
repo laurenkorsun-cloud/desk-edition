@@ -21,7 +21,7 @@ export function briefingPathForToken(token: string, date?: string) {
 
 export function relativeRedirectForSubscriber(subscriber: {
   unsubscribe_token: string;
-  onboarding_completed?: boolean;
+  onboarding_completed?: boolean | null;
 }) {
   const { unsubscribe_token, onboarding_completed } = subscriber;
   return onboarding_completed
@@ -31,7 +31,7 @@ export function relativeRedirectForSubscriber(subscriber: {
 
 export function redirectForSubscriber(subscriber: {
   unsubscribe_token: string;
-  onboarding_completed?: boolean;
+  onboarding_completed?: boolean | null;
 }) {
   const base = getAppUrl().replace(/\/$/, "");
   return `${base}${relativeRedirectForSubscriber(subscriber)}`;

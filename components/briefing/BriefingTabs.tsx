@@ -46,6 +46,7 @@ type MobileProps = Props & {
   enabledSlugs: string[];
   allModules: ModuleRow[];
   hobbies?: string[];
+  savedCount?: number;
 };
 
 export function BriefingMobileNav({
@@ -56,6 +57,7 @@ export function BriefingMobileNav({
   enabledSlugs,
   allModules,
   hobbies = [],
+  savedCount = 0,
 }: MobileProps) {
   const pathname = usePathname();
   const activeSlug = pathname.endsWith(date)
@@ -119,10 +121,19 @@ export function BriefingMobileNav({
             );
           })}
         </nav>
+        {savedCount > 0 && (
+          <Link
+            href={`/me/${token}/${date}/saved`}
+            onClick={onClose}
+            className="mt-6 rounded-sm px-3 py-3 text-sm text-[var(--briefing-ink)]"
+          >
+            Saved ({savedCount})
+          </Link>
+        )}
         {moduleLinks.length > 0 && (
           <>
             <p className="mb-2 mt-8 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--briefing-muted)]">
-              Modules
+              Hobbies & interests
             </p>
             <nav className="flex flex-col gap-1 overflow-y-auto">
               {moduleLinks.map((m) => (

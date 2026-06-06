@@ -18,6 +18,7 @@ const SaveSchema = z.object({
   spotify_playlist_url: z.string().nullable().optional(),
   toggles: z.record(z.string(), z.boolean()),
   onboarding_completed: z.boolean().optional(),
+  morning_email_enabled: z.boolean().optional(),
   hobbies: z.array(z.string()).optional(),
   morning_goals: z.array(z.string()).optional(),
   content_tone: z.string().optional(),

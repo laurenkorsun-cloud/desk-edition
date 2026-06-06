@@ -1,22 +1,21 @@
 import Link from "next/link";
+import { moduleLabel } from "@/config/module-labels";
 
 type Props = {
-  name: string;
+  slug: string;
   token: string;
 };
 
-export function DisabledModuleCard({ name, token }: Props) {
+export function DisabledModuleCard({ slug, token }: Props) {
   return (
-    <div className="rounded-sm bg-[var(--briefing-ink)]/[0.03] px-4 py-3 font-sans text-sm text-[var(--briefing-muted)]">
-      <span className="text-[var(--briefing-ink)]">{name}</span>
-      {" — "}
-      off ·{" "}
-      <Link
-        href={`/settings?token=${token}`}
-        className="text-[var(--briefing-green)] hover:underline"
-      >
-        Enable in settings
-      </Link>
-    </div>
+    <Link
+      href={`/settings?token=${token}`}
+      className="rounded-sm border border-[var(--briefing-ink)]/[0.08] bg-[var(--briefing-ink)]/[0.02] px-3 py-2 font-sans text-sm text-[var(--briefing-muted)] transition hover:border-[var(--briefing-green)]/30 hover:text-[var(--briefing-ink)]"
+    >
+      <span className="font-medium text-[var(--briefing-ink)]">
+        {moduleLabel(slug)}
+      </span>
+      <span className="text-[var(--briefing-muted)]"> · off</span>
+    </Link>
   );
 }

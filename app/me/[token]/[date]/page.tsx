@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import { getPersonalEditionByToken } from "@/lib/personal-editions";
 import { getActiveModules } from "@/lib/config-db";
 import { getSubscriberByToken } from "@/lib/profile";
@@ -12,7 +11,7 @@ type Props = { params: Promise<{ token: string; date: string }> };
 export default async function PersonalEditionHubPage({ params }: Props) {
   const { token, date } = await params;
   const edition = await getPersonalEditionByToken(token, date);
-  if (!edition) notFound();
+  if (!edition) return null;
 
   const content = edition.content_json as PersonalEditionContent;
   const [modules, subscriber] = await Promise.all([
@@ -31,6 +30,7 @@ export default async function PersonalEditionHubPage({ params }: Props) {
       allModules={modules}
       enabledSlugs={enabled}
       hobbySlugs={hobbies}
+      watchlistSymbols={subscriber?.watchlist_symbols}
     />
   );
 }

@@ -1,3 +1,4 @@
+import { attachNewsImagesWithOgFallback } from "@/lib/attach-news-images";
 import { fetchHeadlines } from "@/lib/rss";
 import { getLens } from "@/lib/config-db";
 import { getEnabledModulesForSubscriber } from "@/lib/profile";
@@ -80,11 +81,33 @@ export async function generatePersonalEditionForSubscriber(
     };
   }
 
+  if (enabled.includes("news")) {
+    content = await attachNewsImagesWithOgFallback(content, headlines);
+  }
+
+  if (enabled.includes("markets")) {
+    const { enrichMarketsContent } = await import("@/lib/enrich-markets-stories");
+    content = enrichMarketsContent(content, {
+      lensLabel: primary?.name ?? "your team",
+      lensSlug: primary?.slug ?? null,
+    });
+    content = {
+      ...content,
+      marketsMeta: {
+        pulse: content.marketsMeta?.pulse ?? "",
+        watchItems: content.marketsMeta?.watchItems ?? [],
+        builtAt: new Date().toISOString(),
+      },
+    };
+  }
+
   content = {
     ...content,
     meta: {
-      primaryLens: primary?.slug ?? "none",
-      secondaryLens: secondary?.slug ?? null,
+      ...content.meta,
+      primaryLens: primary?.name ?? content.meta?.primaryLens ?? "General",
+      primaryLensSlug: primary?.slug ?? content.meta?.primaryLensSlug ?? null,
+      secondaryLens: secondary?.name ?? content.meta?.secondaryLens ?? null,
       enabledModules: enabled,
     },
   };
@@ -131,7 +154,7 @@ export async function sendAllDuePersonalEditions(): Promise<{
   for (const sub of due) {
     try {
       const result = await generatePersonalEditionForSubscriber(sub, new Date(), {
-        sendEmail: true,
+        sendEmail: Boolean(sub.morning_email_enabled),
       });
       if (result.sent) sent++;
     } catch (err) {

@@ -1,3 +1,5 @@
+import { NORDSTROM_CLOTHING_SALE_URL } from "@/config/module-catalog";
+import { sampleIndustryStories } from "@/lib/sample-industry-stories";
 import type { ModuleBlock, ModuleRow } from "@/lib/config-types";
 import type { SubscriberProfile } from "@/lib/profile";
 import type { WeatherSummary } from "@/lib/weather";
@@ -17,21 +19,17 @@ export function getSamplePersonalModules(params: {
   const samples: Record<string, Omit<ModuleBlock, "slug">> = {
     industry_lens: {
       title: "Industry lens",
-      synopsis: `Today's briefing is filtered for ${lensName}. Headlines and talking points emphasize what clients and teams in your field are likely discussing.`,
+      synopsis: `Today's briefing is filtered for ${lensName}—these stories emphasize what your peers and clients are likely to reference before lunch.`,
       description:
-        "Use this section before stand-ups or client calls to sound prepared without reading every trade publication.",
+        "Expand each story for depth; talking points sit on the right when you open an article.",
       body: "",
-      items: [
-        {
-          headline: `Why today matters for ${lensName}`,
-          synopsis:
-            "Regulatory and market headlines are converging on themes your peers will reference in meetings.",
-          description:
-            "Skim the industry news tab for lens-specific stories, then borrow one talking point for hallway conversation.",
-          sourceUrl: "https://www.reuters.com/",
-          sourceName: "Reuters",
-        },
-      ],
+      items: sampleIndustryStories(lensName).map((s) => ({
+        headline: s.headline,
+        synopsis: s.synopsis ?? s.summary,
+        description: s.description ?? s.whyItMatters,
+        sourceUrl: s.sourceUrl,
+        sourceName: s.sourceName,
+      })),
       sources: [{ title: "Reuters", url: "https://www.reuters.com/" }],
     },
     weather: {
@@ -170,7 +168,7 @@ export function getSamplePersonalModules(params: {
           synopsis: "Seasonal markdowns on shirts, blazers, and shoes from major retailers.",
           description:
             "Good time to refresh interview and client-meeting staples if sizes are in stock.",
-          sourceUrl: "https://www.nordstrom.com/",
+          sourceUrl: NORDSTROM_CLOTHING_SALE_URL,
           sourceName: "Nordstrom",
         },
         {
@@ -179,6 +177,82 @@ export function getSamplePersonalModules(params: {
           description: "Compare return policies before buying for the office.",
           sourceUrl: "https://www.jcrew.com/",
           sourceName: "J.Crew",
+        },
+      ],
+      sources: [],
+    },
+    vacation_planning: {
+      title: "Vacation planning",
+      synopsis: "Weekend getaway ideas and travel prompts matched to your city.",
+      description:
+        "Light planning fodder for PTO conversations—not a full itinerary.",
+      body: "",
+      items: [
+        {
+          headline: "Long-weekend idea",
+          synopsis:
+            "A drivable or short-flight option with one activity worth mentioning.",
+          description:
+            "Use when colleagues swap summer or holiday travel plans.",
+          sourceUrl: "https://www.cntraveler.com/",
+          sourceName: "Condé Nast Traveler",
+        },
+      ],
+      sources: [],
+    },
+    commute: {
+      title: "Commute",
+      synopsis: subscriber.city
+        ? `Transit and traffic notes for ${subscriber.city}.`
+        : "Add your city for commute timing tips.",
+      description:
+        "Check delays before you leave—weather and events can shift the usual route.",
+      body: "",
+      items: [
+        {
+          headline: "Morning route",
+          synopsis:
+            "Typical rush-hour patterns plus any service changes worth knowing.",
+          description:
+            "Buffer five extra minutes if rain or major events are in the forecast.",
+          sourceUrl: "https://www.google.com/maps",
+          sourceName: "Google Maps",
+        },
+      ],
+      sources: [],
+    },
+    sports_scores: {
+      title: "Sports",
+      synopsis: "Last night's scores and headlines fans might mention at work.",
+      description: "One-liner context—no deep sports analysis needed.",
+      body: "",
+      items: [
+        {
+          headline: "Games to know",
+          synopsis:
+            "A headline result or storyline from last night in a major league.",
+          description:
+            "Handy if your office runs fantasy leagues or casual water-cooler chat.",
+          sourceUrl: "https://www.espn.com/",
+          sourceName: "ESPN",
+        },
+      ],
+      sources: [],
+    },
+    podcast_pick: {
+      title: "Podcast",
+      synopsis: "One episode recommendation for the commute or inbox triage.",
+      description: "Matched loosely to your lens and hobbies when possible.",
+      body: "",
+      items: [
+        {
+          headline: "Listen today",
+          synopsis:
+            "A business or culture podcast episode worth a 30-minute listen.",
+          description:
+            "Save for the train or a walk—skip if you're sprinting to a meeting.",
+          sourceUrl: "https://www.spotify.com/",
+          sourceName: "Spotify",
         },
       ],
       sources: [],

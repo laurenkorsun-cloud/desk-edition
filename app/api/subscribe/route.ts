@@ -17,7 +17,7 @@ import {
 
 function subscribePayload(subscriber: {
   unsubscribe_token: string;
-  onboarding_completed?: boolean;
+  onboarding_completed?: boolean | null;
 }) {
   const urls = getSubscriberUrls(subscriber.unsubscribe_token);
   return {
@@ -56,7 +56,10 @@ export async function POST(request: Request) {
 
     if (subscriber?.status === "active") {
       return NextResponse.json({
-        message: "Welcome back—opening your briefing.",
+        message: (subscriber as { onboarding_completed?: boolean })
+          .onboarding_completed
+          ? "Welcome back."
+          : "Welcome back—finish building your briefing.",
         alreadySubscribed: true,
         ...subscribePayload(subscriber),
       });
@@ -93,7 +96,7 @@ export async function POST(request: Request) {
     const row = activeSub ?? subscriber;
 
     return NextResponse.json({
-      message: "You're subscribed—opening your briefing.",
+      message: "Let's build your briefing.",
       ...subscribePayload(row),
     });
   } catch (err) {

@@ -1,110 +1,201 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Story } from "@/lib/types";
-import { resolveDisplaySynopsis } from "@/lib/enrich-news-stories";
+import { upgradeNewsImageUrl } from "@/lib/attach-news-images";
+import {
+  buildNewsTalkingPoint,
+  resolveTieredNews,
+  type NewsTalkingPoint,
+} from "@/lib/news-story-display";
+import { NewsArticleTalkingPoint } from "./NewsArticleTalkingPoint";
 
 type Props = {
   story: Story;
   index: number;
+  lensLabel: string;
+  defaultOpen?: boolean;
   bookmarkId: string;
   isBookmarked: boolean;
   onBookmark: () => void;
   onUnbookmark: () => void;
+  talkingPointBookmarkId: string;
+  isTalkingPointBookmarked: boolean;
+  onBookmarkTalkingPoint: () => void;
+  onUnbookmarkTalkingPoint: () => void;
 };
 
 export function NewsStoryBlock({
   story,
   index,
+  lensLabel,
+  defaultOpen = false,
+  bookmarkId,
   isBookmarked,
   onBookmark,
   onUnbookmark,
+  talkingPointBookmarkId,
+  isTalkingPointBookmarked,
+  onBookmarkTalkingPoint,
+  onUnbookmarkTalkingPoint,
 }: Props) {
-  const [open, setOpen] = useState(true);
-  const { synopsis, analysis, isLegacy } = resolveDisplaySynopsis(story);
-  const synopsisParagraphs = synopsis.split(/\n\n+/).filter((p) => p.trim());
+  const [expanded, setExpanded] = useState(defaultOpen);
+  const [depthOpen, setDepthOpen] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(
+    story.imageUrl ?? null
+  );
+
+  const tiered = resolveTieredNews(story);
+  const talkingPoint: NewsTalkingPoint =
+    story.talkingPoint ?? buildNewsTalkingPoint(story, lensLabel);
+  const depthParagraphs = tiered.depth?.split(/\n\n+/).filter(Boolean) ?? [];
+
+  useEffect(() => {
+    if (imageUrl || !story.sourceUrl) return;
+    fetch(`/api/og-image?url=${encodeURIComponent(story.sourceUrl)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.imageUrl) setImageUrl(upgradeNewsImageUrl(data.imageUrl));
+      })
+      .catch(() => {});
+  }, [story.sourceUrl, imageUrl]);
 
   return (
-    <article className="mb-12 border-b border-[var(--briefing-ink)]/[0.06] pb-12 last:border-0">
-      <div className="flex items-start justify-between gap-4">
-        <button
-          type="button"
-          onClick={() => setOpen(!open)}
-          className="group flex-1 text-left"
-        >
-          <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--briefing-green)]">
-            Article {index + 1}
-          </p>
-          <h3 className="mt-2 font-display text-2xl leading-snug text-[var(--briefing-ink)] group-hover:text-[var(--briefing-green)] md:text-[1.75rem]">
-            {open ? "▾" : "▸"} {story.headline}
-          </h3>
-        </button>
-        <button
-          type="button"
-          onClick={isBookmarked ? onUnbookmark : onBookmark}
-          className="shrink-0 font-sans text-xs text-[var(--briefing-muted)] hover:text-[var(--briefing-green)]"
-        >
-          {isBookmarked ? "Saved" : "Save"}
-        </button>
-      </div>
-
-      {open && (
-        <div className="mt-6 space-y-6">
-          <section>
-            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--briefing-muted)]">
-              Full synopsis
-            </p>
-            <p className="mt-1 font-sans text-xs text-[var(--briefing-muted)]">
-              {isLegacy
-                ? "Short edition—regenerate today’s briefing for the full synopsis."
-                : "Written so you can skip the link—key facts, numbers, and what happens next."}
-            </p>
-            <div className="mt-4 space-y-4">
-              {synopsisParagraphs.map((para, i) => (
-                <p
-                  key={i}
-                  className="font-sans text-[17px] leading-[1.8] text-[var(--briefing-ink)]"
+    <article className="mb-10 border-b border-[var(--briefing-ink)]/[0.06] pb-10 last:border-0 md:mb-12 md:pb-12">
+      <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-6 lg:gap-8">
+        <div className="min-w-0 flex-1">
+          <div className="flex gap-4">
+            {imageUrl && (
+              <div className="hidden h-16 w-16 shrink-0 overflow-hidden rounded-sm bg-[var(--briefing-ink)]/[0.04] sm:block">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={imageUrl}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-4">
+                <button
+                  type="button"
+                  onClick={() => setExpanded(!expanded)}
+                  className="group flex-1 text-left"
                 >
-                  {para.trim()}
-                </p>
-              ))}
-            </div>
-          </section>
+                  <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--briefing-green)]">
+                    Article {index + 1}
+                  </p>
+                  <h3 className="mt-2 font-display text-xl leading-snug text-[var(--briefing-ink)] transition group-hover:text-[var(--briefing-green)] md:text-2xl">
+                    {expanded ? "▾" : "▸"} {story.headline}
+                  </h3>
+                </button>
+                <button
+                  type="button"
+                  onClick={isBookmarked ? onUnbookmark : onBookmark}
+                  className="shrink-0 font-sans text-xs text-[var(--briefing-muted)] hover:text-[var(--briefing-green)]"
+                >
+                  {isBookmarked ? "Saved" : "Save"}
+                </button>
+              </div>
 
-          {analysis && analysis !== synopsis && (
-            <section>
-              <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--briefing-muted)]">
-                Analysis
-              </p>
-              <div className="mt-3 space-y-4 font-sans text-[15px] leading-[1.75] text-[var(--briefing-ink)]/90">
-                {analysis.split(/\n\n+/).map((para, i) => (
-                  <p key={i}>{para.trim()}</p>
+              {imageUrl && (
+                <div className="mt-3 h-14 w-14 overflow-hidden rounded-sm sm:hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imageUrl}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              )}
+
+              <div className="mt-4 rounded-sm border border-[var(--gold)]/40 bg-gradient-to-br from-[var(--gold)]/[0.08] to-[var(--briefing-green)]/[0.04] px-4 py-3.5 shadow-[0_1px_3px_rgba(28,25,22,0.04)]">
+                <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--gold-dark)]">
+                  Why it matters at work
+                </p>
+                <p className="mt-2 font-display text-[15px] leading-relaxed text-[var(--briefing-ink)]">
+                  {story.whyItMatters}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {expanded && (
+            <div className="mt-6 space-y-6">
+              <div className="space-y-4">
+                {tiered.lede.split(/\n\n+/).map((para, i) => (
+                  <p
+                    key={i}
+                    className="font-sans text-[17px] leading-[1.75] text-[var(--briefing-ink)]"
+                  >
+                    {para.trim()}
+                  </p>
                 ))}
               </div>
-            </section>
-          )}
 
-          <section className="rounded-sm border-l-2 border-[var(--briefing-green)] bg-[var(--briefing-green)]/[0.04] py-3 pl-5 pr-4">
-            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--briefing-green)]">
-              Why it matters at work
-            </p>
-            <p className="mt-2 font-sans text-[15px] leading-relaxed text-[var(--briefing-ink)]/90">
-              {story.whyItMatters}
-            </p>
-          </section>
+              {tiered.hasExpand && depthParagraphs.length > 0 && (
+                <div>
+                  {!depthOpen ? (
+                    <button
+                      type="button"
+                      onClick={() => setDepthOpen(true)}
+                      className="font-sans text-sm font-medium text-[var(--briefing-green)] hover:underline"
+                    >
+                      Read more →
+                    </button>
+                  ) : (
+                    <div className="space-y-4">
+                      {depthParagraphs.map((para, i) => (
+                        <p
+                          key={i}
+                          className="font-sans text-[15px] leading-[1.75] text-[var(--briefing-ink)]/90"
+                        >
+                          {para.trim()}
+                        </p>
+                      ))}
+                      {tiered.analysis && (
+                        <p className="font-sans text-[15px] leading-[1.75] text-[var(--briefing-ink)]/90">
+                          {tiered.analysis}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
-          {story.sourceUrl && (
-            <a
-              href={story.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 font-sans text-sm font-medium text-[var(--briefing-green)] hover:underline"
-            >
-              Read at {story.sourceName ?? "source"} →
-            </a>
+              {tiered.isLegacy && !tiered.hasExpand && (
+                <p className="font-sans text-xs text-[var(--briefing-muted)]">
+                  Regenerate today&apos;s edition for the new shorter news
+                  format.
+                </p>
+              )}
+
+              {story.sourceUrl && (
+                <a
+                  href={story.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex rounded-sm bg-[var(--briefing-green)] px-5 py-2.5 font-sans text-sm font-medium text-white hover:bg-[var(--briefing-green-hover)]"
+                >
+                  Read at {story.sourceName ?? "source"} →
+                </a>
+              )}
+            </div>
           )}
         </div>
-      )}
+
+        {expanded && (
+          <aside className="w-full shrink-0 md:w-56 md:sticky md:top-8 lg:w-72">
+            <NewsArticleTalkingPoint
+              point={talkingPoint}
+              bookmarkId={talkingPointBookmarkId}
+              isBookmarked={isTalkingPointBookmarked}
+              onBookmark={onBookmarkTalkingPoint}
+              onUnbookmark={onUnbookmarkTalkingPoint}
+            />
+          </aside>
+        )}
+      </div>
     </article>
   );
 }

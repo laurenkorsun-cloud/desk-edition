@@ -81,6 +81,70 @@ export const SEED_LENSES: LensSeed[] = [
       "Frame for legal interns and law students: courts, regulation, corporate law, litigation trends, compliance, and deals—what matters in firms, government, and in-house teams.",
     rss_feeds: [],
   },
+  {
+    slug: "general_business",
+    name: "General business",
+    sort_order: 11,
+    prompt_addon:
+      "Frame for general business roles: corporate strategy, office culture, cross-functional priorities, and headlines any professional should know.",
+    rss_feeds: [],
+  },
+  {
+    slug: "product",
+    name: "Product",
+    sort_order: 12,
+    prompt_addon:
+      "Frame for product managers and PM interns: roadmaps, launches, user research, competitive moves, and platform shifts.",
+    rss_feeds: [],
+  },
+  {
+    slug: "marketing",
+    name: "Marketing",
+    sort_order: 13,
+    prompt_addon:
+      "Frame for marketing roles: brand, campaigns, growth, social, and how consumer trends affect business.",
+    rss_feeds: [],
+  },
+  {
+    slug: "data_analytics",
+    name: "Data & analytics",
+    sort_order: 14,
+    prompt_addon:
+      "Frame for data and analytics roles: metrics, BI, experimentation, AI tooling, and how data drives decisions.",
+    rss_feeds: [],
+  },
+  {
+    slug: "hr",
+    name: "HR",
+    sort_order: 15,
+    prompt_addon:
+      "Frame for HR and people ops: hiring, culture, labor policy, benefits, and workplace trends.",
+    rss_feeds: [],
+  },
+  {
+    slug: "government",
+    name: "Government",
+    sort_order: 16,
+    prompt_addon:
+      "Frame for public-sector roles: agencies, budgets, regulation, and policy implementation.",
+    rss_feeds: [],
+  },
+  {
+    slug: "nonprofit",
+    name: "Nonprofit",
+    sort_order: 17,
+    prompt_addon:
+      "Frame for nonprofit roles: mission impact, grants, donors, and sector-specific policy.",
+    rss_feeds: [],
+  },
+  {
+    slug: "student",
+    name: "Student",
+    sort_order: 18,
+    prompt_addon:
+      "Frame for students and early-career readers: internships, recruiting, campus-to-office transition, and foundational business literacy.",
+    rss_feeds: [],
+  },
 ];
 
 export const SEED_MODULES: ModuleSeed[] = [
@@ -100,11 +164,12 @@ export const SEED_MODULES: ModuleSeed[] = [
     default_on: true,
     sort_order: 2,
     admin_body: `Markets module — editorial instructions:
-- Lead with the single biggest market story of the day (index moves, rates, FX, commodities).
-- Call out what is up vs down (major indices, key stocks or sectors) and the main driver (data, Fed, earnings, geopolitics, deal news).
-- Explain why it matters in one line for someone starting a corporate job—not for day traders.
-- Flag 1–2 "up and coming" themes (sector rotation, IPO/M&A buzz, policy shift) they might hear at work.
-- No buy/sell advice; neutral tone; avoid jargon or define it briefly.`,
+- Business & markets section: ${3} tiered stories with visible ledes (numbers required) + expandable depth.
+- Return marketsMeta.pulse (one-line summary with 2–3 key %) and marketsMeta.watchItems (today's catalysts).
+- Lead with what moved (indices, rates, sectors) and by roughly how much; then why.
+- Tag themes: Rates & Fed, Earnings, Deals & IPOs, Sector rotation, Mega-cap tech.
+- whyItMatters: concrete stakes comment (not a script). talkingPoint per story: observation with a number + educated intern question.
+- No buy/sell advice; neutral tone; define jargon briefly.`,
   },
   {
     slug: "talking_points",
@@ -120,7 +185,11 @@ export const SEED_MODULES: ModuleSeed[] = [
     description: "Why today matters for your lens",
     default_on: true,
     sort_order: 4,
-    admin_body: "",
+    admin_body: `Industry lens module — editorial instructions:
+- Write ONLY for the reader's primary lens (from READER PROFILE). A Medical edition and a Technology edition must not share the same synopsis.
+- Tie today's top headline or sector theme to vocabulary that lens uses daily (e.g. clinical teams, platform roadmaps, grant cycles, audit clients).
+- Include one item with a headline like "Why today matters for [lens name]" and concrete examples—not generic "at work" advice.
+- If secondary lens is set, add one sentence bridging both fields.`,
   },
   {
     slug: "books",
@@ -191,7 +260,34 @@ export const SEED_MODULES: ModuleSeed[] = [
     default_on: false,
     sort_order: 12,
     admin_body:
-      "Edit: 2–3 sale links or retailers (business casual / professional wear).",
+      "Edit: 2–3 sale links or retailers (business casual / professional wear). Primary Nordstrom link: https://www.nordstrom.com/browse/sale/men/clothing",
+  },
+  {
+    slug: "commute",
+    name: "Commute",
+    description: "Transit, traffic, and timing for your route",
+    default_on: false,
+    sort_order: 13,
+    admin_body:
+      "Edit: one practical commute note—transit delays, weather impact, or timing tip.",
+  },
+  {
+    slug: "sports_scores",
+    name: "Sports",
+    description: "Scores and headlines worth knowing",
+    default_on: false,
+    sort_order: 14,
+    admin_body:
+      "Edit: 1–2 sports headlines or scores fans in the office might mention.",
+  },
+  {
+    slug: "podcast_pick",
+    name: "Podcast",
+    description: "One listen recommendation for the morning",
+    default_on: false,
+    sort_order: 15,
+    admin_body:
+      "Edit: one podcast episode or show worth a commute listen—no spoilers.",
   },
 ];
 
@@ -208,6 +304,9 @@ export const DEFAULT_CORP_TOGGLES: Record<string, boolean> = {
   movies: false,
   historical_fact: false,
   clothing_sales: false,
+  commute: false,
+  sports_scores: false,
+  podcast_pick: false,
 };
 
 export const DEFAULT_MED_TOGGLES: Record<string, boolean> = {
@@ -223,4 +322,7 @@ export const DEFAULT_MED_TOGGLES: Record<string, boolean> = {
   movies: false,
   historical_fact: true,
   clothing_sales: false,
+  commute: false,
+  sports_scores: false,
+  podcast_pick: false,
 };

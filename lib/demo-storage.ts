@@ -27,10 +27,11 @@ export function demoToProfilePayload(prefs: DemoPreferences) {
   ];
   return {
     primary_lens_slug: prefs.primaryLens,
+    secondary_lens_slug: prefs.secondaryLens || null,
     timezone: prefs.timezone,
     city: prefs.city || null,
     delivery_time: prefs.wakeTime,
-    toggles: prefs.modules,
+    toggles: { ...prefs.modules, news: true, industry_lens: true },
     hobbies,
     morning_goals: prefs.goals,
     content_tone:

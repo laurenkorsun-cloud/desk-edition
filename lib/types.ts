@@ -8,6 +8,13 @@ export const StorySchema = z.object({
   whyItMatters: z.string(),
   sourceUrl: z.string().optional(),
   sourceName: z.string().optional(),
+  imageUrl: z.string().optional(),
+  talkingPoint: z
+    .object({
+      line: z.string(),
+      question: z.string(),
+    })
+    .optional(),
 });
 
 export const SectionSchema = z.object({

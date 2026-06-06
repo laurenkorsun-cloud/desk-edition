@@ -1,27 +1,29 @@
-/** Shared requirements for the News tab (6+ in-depth articles). */
-export const NEWS_MIN_ARTICLES = 6;
+/** Target story count on the News tab */
+export const NEWS_MIN_ARTICLES = 4;
+export const NEWS_TARGET_ARTICLES = 5;
 
-/** Target length so readers rarely need the source link */
+/** Visible lede (tier 1) — NYT-morning style */
+export const NEWS_LEDE_MAX_WORDS = 90;
+
+/** Expandable depth (tier 2) */
+export const NEWS_DEPTH_MIN_WORDS = 80;
+
+/** Legacy editions used long single-block synopses */
 export const NEWS_SYNOPSIS_MIN_WORDS = 280;
 
 export const NEWS_STORY_PROMPT = `
 NEWS TAB (required when "news" module is enabled):
-- The "World" section MUST contain at least ${NEWS_MIN_ARTICLES} distinct stories (aim for 6–8), each from a different headline/theme.
+- The "World" section MUST contain ${NEWS_TARGET_ARTICLES} distinct top stories (minimum ${NEWS_MIN_ARTICLES}), each from a different headline/theme.
 - Do NOT put markets-only stories in World—those belong in "Business & markets".
-- "Policy & work" may add 1–2 more policy stories; World must still have ${NEWS_MIN_ARTICLES}+ on its own.
+- "Policy & work" may add 0–1 more policy stories; prioritize quality over quantity.
 
-Per news story — the SYNOPSIS is the main product. The reader should NOT need to click sourceUrl to understand the story.
+Per news story — TIERED format (reader sees lede first, expands for depth):
 
-- summary: 1–2 sentences (internal hook only; UI leads with synopsis)
-- synopsis: MINIMUM ${NEWS_SYNOPSIS_MIN_WORDS} words (typically 12–20 sentences). Structure it as a complete mini-article:
-  1) Lede — what happened in one sharp sentence
-  2) Facts — who, what, where, when; quote or paraphrase key actors if known from snippets
-  3) Numbers — at least 5–8 specific figures (%, $ amounts, vote counts, index moves, job data, dates, company names, volumes, timelines)
-  4) Context — how this connects to prior weeks and adjacent stories
-  5) What's next — scheduled votes, earnings, deadlines, talks, or data releases
-  Write in clear paragraphs (use \\n\\n between paragraph breaks in JSON string). No bullet lists. No "read more" teasing.
-- description: 2–4 additional paragraphs going deeper on analysis (cause/effect, winners/losers, regional/industry impact). Must add NEW detail beyond synopsis, not repeat it.
-- whyItMatters: 2–4 sentences — workplace angle for this reader's lens
-- sourceUrl + sourceName: from HEADLINES when possible; link is optional verification, not required reading
+- summary: THE VISIBLE LEDE. 2–4 sentences (~50–${NEWS_LEDE_MAX_WORDS} words), NYT-morning style. Must include 2–3 specific numbers (%, $, dates, vote counts, index moves). Sharp, enticing—reader should want to expand.
+- synopsis: EXPANDABLE DEPTH (~${NEWS_DEPTH_MIN_WORDS}–180 words). Additional paragraphs: context, what happened next, who said what. Use \\n\\n between paragraphs. Do NOT repeat the summary verbatim.
+- description: OPTIONAL shorter analysis (1–2 paragraphs) — cause/effect, workplace winners/losers. New detail only.
+- whyItMatters: 1–2 sentences — MUST be specific to this reader's primary lens (Medical vs Technology vs Audit vs Nonprofit must read differently for the same headline). Shown outside the expand fold.
+- sourceUrl + sourceName: use the exact URL from HEADLINES (article link, not homepage)
+- imageUrl: copy from HEADLINES Image field when present for the matched story
 
 Never invent statistics. If a number is unavailable, say what is known qualitatively instead of guessing.`;

@@ -70,6 +70,28 @@ export function buildBriefingSearchQueries(params: {
     });
   }
 
+  if (enabled.has("commute") && city) {
+    queries.push({
+      slug: "commute",
+      query: `${city} transit subway commuter delays traffic ${dateLabel}`,
+    });
+  }
+
+  if (enabled.has("sports_scores")) {
+    queries.push({
+      slug: "sports_scores",
+      query: `sports scores headlines ${dateLabel} NBA NFL MLB`,
+    });
+  }
+
+  if (enabled.has("podcast_pick")) {
+    const hobbyHint = hobbies[0] ? ` ${hobbies[0]}` : ` ${primary}`;
+    queries.push({
+      slug: "podcast_pick",
+      query: `best podcast episode${hobbyHint} ${monthYear}`,
+    });
+  }
+
   if (enabled.has("industry_lens")) {
     queries.push({
       slug: "industry_lens",

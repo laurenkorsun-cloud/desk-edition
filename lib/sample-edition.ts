@@ -1,5 +1,6 @@
 import type { EditionContent } from "@/lib/types";
 import { SAMPLE_WORLD_NEWS } from "@/lib/sample-news-stories";
+import { SAMPLE_MARKETS_STORIES } from "@/lib/sample-markets-stories";
 
 export function getSampleEditionContent(): EditionContent {
   return {
@@ -11,26 +12,7 @@ export function getSampleEditionContent(): EditionContent {
       },
       {
         name: "Business & markets",
-        stories: [
-          {
-            headline: "Mega-cap tech and AI capex dominate market conversation",
-            summary:
-              "Business press continues to track AI infrastructure spending, cloud demand, and whether valuations reflect near-term earnings or long-run optionality.",
-            whyItMatters:
-              "Even in accounting and advisory, clients reference AI spend—asking how it maps to capitalization vs. expense is a credible intern move.",
-            sourceUrl: "https://www.cnbc.com/",
-            sourceName: "CNBC",
-          },
-          {
-            headline: "Deal flow and IPO windows remain a barometer of risk appetite",
-            summary:
-              "M&A and listing activity in the headlines signal whether boards are offensive or defensive—useful for understanding client tone in advisory conversations.",
-            whyItMatters:
-              "When a manager mentions 'busy season,' you can connect it to whether clients are closing transactions or just running steady-state compliance.",
-            sourceUrl: "https://www.marketwatch.com/",
-            sourceName: "MarketWatch",
-          },
-        ],
+        stories: SAMPLE_MARKETS_STORIES,
       },
       {
         name: "Policy & work",

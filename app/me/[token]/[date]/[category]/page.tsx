@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { getPersonalEditionByToken } from "@/lib/personal-editions";
 import { getSubscriberByToken } from "@/lib/profile";
+import { attachNewsImagesFromHeadlines } from "@/lib/attach-news-images";
 import { getLens } from "@/lib/config-db";
+import { fetchHeadlines } from "@/lib/rss";
 import { BriefingCategoryView } from "@/components/briefing/BriefingCategoryView";
 import { ALL_CATEGORIES, type BriefingCategory } from "@/config/briefing-nav";
 import type { PersonalEditionContent } from "@/lib/config-types";
@@ -24,7 +26,13 @@ export default async function PersonalCategoryPage({ params }: Props) {
 
   if (!edition || !subscriber) notFound();
 
-  const content = edition.content_json as PersonalEditionContent;
+  let content = edition.content_json as PersonalEditionContent;
+
+  if (category === "news") {
+    const headlines = await fetchHeadlines();
+    content = attachNewsImagesFromHeadlines(content, headlines);
+  }
+
   const lens = subscriber.primary_lens_slug
     ? await getLens(subscriber.primary_lens_slug)
     : null;

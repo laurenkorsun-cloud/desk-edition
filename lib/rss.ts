@@ -14,22 +14,66 @@ export type RawHeadline = {
   category: RssSource["category"];
   pubDate: string | null;
   snippet: string;
+  imageUrl?: string;
 };
 
-const parser = new Parser({
-  timeout: 15000,
-  headers: {
-    "User-Agent": "DeskEdition/1.0 (news digest bot)",
-  },
-});
-
-function normalizeTitle(title: string): string {
+export function normalizeHeadlineTitle(title: string): string {
   return title
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 }
+
+function extractImageFromRssItem(
+  item: Parser.Item & {
+    mediaContent?: { $?: { url?: string } } | { $?: { url?: string } }[];
+    mediaThumbnail?: { $?: { url?: string } } | { $?: { url?: string } }[];
+    contentEncoded?: string;
+  }
+): string | undefined {
+  const thumb = item.mediaThumbnail;
+  const thumbUrl = Array.isArray(thumb)
+    ? thumb[0]?.$?.url
+    : thumb?.$?.url;
+  if (thumbUrl?.startsWith("http")) return thumbUrl;
+
+  const media = item.mediaContent;
+  const mediaUrl = Array.isArray(media)
+    ? media.find((m) => m?.$?.url?.startsWith("http"))?.$?.url
+    : media?.$?.url;
+  if (mediaUrl?.startsWith("http")) return mediaUrl;
+
+  if (item.enclosure?.url) {
+    const type = item.enclosure.type ?? "";
+    if (/image|jpeg|png|webp/i.test(type) || /\.(jpg|jpeg|png|webp)/i.test(item.enclosure.url)) {
+      return item.enclosure.url;
+    }
+  }
+
+  const html = item.contentEncoded ?? item.content ?? "";
+  const imgMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+  if (imgMatch?.[1]?.startsWith("http")) return imgMatch[1];
+
+  return undefined;
+}
+
+const parser = new Parser({
+  timeout: 15000,
+  headers: {
+    "User-Agent":
+      "Mozilla/5.0 (compatible; DeskEdition/1.0; +https://desk-edition)",
+  },
+  customFields: {
+    item: [
+      ["media:content", "mediaContent"],
+      ["media:thumbnail", "mediaThumbnail"],
+      ["content:encoded", "contentEncoded"],
+    ],
+  },
+});
+
+const normalizeTitle = normalizeHeadlineTitle;
 
 function isWithinHours(date: Date | null, hours: number): boolean {
   if (!date || Number.isNaN(date.getTime())) return true;
@@ -72,6 +116,13 @@ export async function fetchHeadlines(
             snippet: (item.contentSnippet ?? item.summary ?? "")
               .slice(0, 400)
               .trim(),
+            imageUrl: extractImageFromRssItem(
+              item as Parser.Item & {
+                mediaContent?: { $?: { url?: string } }[];
+                mediaThumbnail?: { $?: { url?: string } };
+                contentEncoded?: string;
+              }
+            ),
           });
         }
       } catch (err) {
@@ -114,7 +165,7 @@ export function formatHeadlinesForPrompt(headlines: RawHeadline[]): string {
   return headlines
     .map(
       (h, i) =>
-        `${i + 1}. [${h.category}] ${h.source}: ${h.title}\n   URL: ${h.link}\n   Snippet: ${h.snippet || "(none)"}`
+        `${i + 1}. [${h.category}] ${h.source}: ${h.title}\n   URL: ${h.link}${h.imageUrl ? `\n   Image: ${h.imageUrl}` : ""}\n   Snippet: ${h.snippet || "(none)"}`
     )
     .join("\n\n");
 }

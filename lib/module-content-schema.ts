@@ -33,6 +33,12 @@ export const PersonalSynthesisSchema = z.object({
           synopsis: z.string().optional(),
           description: z.string().optional(),
           whyItMatters: z.string(),
+          talkingPoint: z
+            .object({
+              line: z.string(),
+              question: z.string(),
+            })
+            .optional(),
           sourceUrl: z.string().optional(),
           sourceName: z.string().optional(),
         })
@@ -43,6 +49,13 @@ export const PersonalSynthesisSchema = z.object({
   talkingPointsByCategory: z.record(z.string(), z.array(z.string())).optional(),
   emailBullets: z.array(z.string()),
   modules: z.record(z.string(), GeneratedModuleSchema).optional(),
+  marketsMeta: z
+    .object({
+      pulse: z.string().optional(),
+      intro: z.string().optional(),
+      watchItems: z.array(z.string()),
+    })
+    .optional(),
 });
 
 export type GeneratedModule = z.infer<typeof GeneratedModuleSchema>;

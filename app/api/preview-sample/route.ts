@@ -4,6 +4,7 @@ import { generatePreviewSample } from "@/lib/preview-sample";
 
 const PrefsSchema = z.object({
   primaryLens: z.string(),
+  secondaryLens: z.string().nullable().optional().default(null),
   hobbies: z.array(z.string()),
   customHobby: z.string(),
   goals: z.array(z.string()),

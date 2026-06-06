@@ -6,6 +6,7 @@ import type { ModuleRow, ModuleBlock, PersonalEditionContent } from "@/lib/confi
 import type { SubscriberProfile } from "@/lib/profile";
 import type { EditionContent } from "@/lib/types";
 import { getSampleEditionContent } from "@/lib/sample-edition";
+import { SAMPLE_MARKETS_META } from "@/lib/sample-markets-stories";
 import { getSamplePersonalModules } from "@/lib/sample-personal-modules";
 import {
   formatModuleInstructions,
@@ -20,9 +21,16 @@ import { fetchBriefingWebSearch } from "@/lib/fetch-briefing-search";
 import { formatBriefingSearchForPrompt } from "@/lib/format-briefing-search";
 import { isWebSearchConfigured } from "@/lib/web-search";
 import { NEWS_STORY_PROMPT, NEWS_SYNOPSIS_MIN_WORDS } from "@/config/news-editorial";
+import { MARKETS_STORY_PROMPT } from "@/config/markets-editorial";
+import { INDUSTRY_STORY_PROMPT } from "@/config/industry-editorial";
+import { enrichMarketsContent } from "@/lib/enrich-markets-stories";
 import { enrichNewsContent } from "@/lib/enrich-news-stories";
 import { anchorTalkingPoints } from "@/lib/anchor-talking-points";
 import { TALKING_POINTS_PROMPT } from "@/config/talking-points-editorial";
+import {
+  LENS_PERSONALIZATION_PROMPT,
+  personalizePersonalContent,
+} from "@/lib/lens-personalization";
 
 const AI_MODULE_SLUGS = [
   "weather",
@@ -34,6 +42,9 @@ const AI_MODULE_SLUGS = [
   "clothing_sales",
   "vacation_planning",
   "industry_lens",
+  "commute",
+  "sports_scores",
+  "podcast_pick",
 ] as const;
 
 const SYSTEM = `You are the editor of Desk Edition—a personalized daily morning briefing for one specific reader.
@@ -44,7 +55,7 @@ Rules:
 - Write fresh content for today's date—never recycle generic filler.
 - Personalize: tie recommendations and framing to their lens, hobbies, and goals.
 - For module items: synopsis 3–5 sentences; description one full paragraph.
-- For NEWS stories (World section): synopsis must be a standalone mini-article (${NEWS_SYNOPSIS_MIN_WORDS}+ words) so the reader never needs the link; follow NEWS rules in the user message.
+- For NEWS stories: use tiered format (short summary lede + expandable synopsis depth); follow NEWS rules in the user message.
 - Sources: include sourceUrl and sourceName on every item when possible.
   - For news/markets: prefer URLs from the HEADLINES list.
   - For books/movies/music/sales/hobbies/etc.: MUST use URLs from the WEB SEARCH RESULTS block when provided.
@@ -233,7 +244,8 @@ Produce JSON:
 }
 
 ${enabledSlugs.includes("news") ? NEWS_STORY_PROMPT : 'Omit or empty "World" and non-business sections.'}
-${!enabledSlugs.includes("markets") ? 'Keep Business section to 1 general story only if news is on.' : "Markets on: emphasize moves, why, themes in Business section and markets talking points."}
+${enabledSlugs.includes("markets") ? MARKETS_STORY_PROMPT : 'Keep Business section to 1 general story only if news is on.'}
+${enabledSlugs.includes("industry_lens") ? INDUSTRY_STORY_PROMPT : ""}
 ${!enabledSlugs.includes("talking_points") ? "talkingPoints: [] and minimal talkingPointsByCategory." : TALKING_POINTS_PROMPT}
 
 Each module needs at least 1 item (books/movies: 1 pick; clothing_sales: 2-3 sales; historical_fact: 1 fact with source; weather: 1 item using live API; calendar: today's plan from their notes).`;
@@ -259,6 +271,7 @@ Each module needs at least 1 item (books/movies: 1 pick; clothing_sales: 2-3 sal
       enabledSlugs,
       modules,
       lensNames,
+      primaryLensSlug: subscriber.primary_lens_slug,
       weatherFacts: weatherFacts ?? null,
     });
   } catch (err) {
@@ -279,6 +292,7 @@ function assemblePersonalContent(
     enabledSlugs: string[];
     modules: ModuleRow[];
     lensNames: { primary: string; secondary: string | null };
+    primaryLensSlug?: string | null;
     weatherFacts: WeatherSummary | null;
   }
 ): PersonalEditionContent {
@@ -297,6 +311,7 @@ function assemblePersonalContent(
         ...st,
         synopsis: st.synopsis?.trim() || undefined,
         description: st.description?.trim() || st.whyItMatters,
+        talkingPoint: st.talkingPoint,
       })),
     })),
     talkingPoints: parsed.talkingPoints,
@@ -307,8 +322,15 @@ function assemblePersonalContent(
     ...base,
     talkingPointsByCategory: parsed.talkingPointsByCategory,
     modules: mergeWeatherData(blocks, ctx.weatherFacts),
+    marketsMeta: parsed.marketsMeta
+      ? {
+          ...parsed.marketsMeta,
+          builtAt: new Date().toISOString(),
+        }
+      : undefined,
     meta: {
       primaryLens: ctx.lensNames.primary,
+      primaryLensSlug: ctx.primaryLensSlug ?? null,
       secondaryLens: ctx.lensNames.secondary ?? null,
       enabledModules: ctx.enabledSlugs,
     },
@@ -316,6 +338,12 @@ function assemblePersonalContent(
 
   if (ctx.enabledSlugs.includes("news")) {
     assembled = enrichNewsContent(assembled);
+  }
+
+  if (ctx.enabledSlugs.includes("markets")) {
+    assembled = enrichMarketsContent(assembled, {
+      lensLabel: ctx.lensNames.primary,
+    });
   }
 
   if (ctx.enabledSlugs.includes("talking_points")) {
@@ -344,27 +372,48 @@ function buildSamplePersonal(params: {
     weather: params.weatherFacts ?? null,
   });
 
-  const sample: PersonalEditionContent = {
-    ...base,
-    talkingPointsByCategory: {
-      news: base.talkingPoints.slice(0, 2),
-      markets: base.talkingPoints.slice(1, 3),
-      industry: [base.talkingPoints[0] ?? "What's your team's take on today's headline?"],
-      weather: ["Did the commute weather catch anyone off guard?"],
-      books: ["Have you read anything good lately—I can share a pick."],
-      movies: ["Anything good on streaming this weekend?"],
-      clothing_sales: ["Anyone score a good sale on work clothes lately?"],
-      hobbies: base.talkingPoints.slice(0, 2),
+  const lensSlug = params.subscriber.primary_lens_slug ?? "general_business";
+
+  let sample: PersonalEditionContent = personalizePersonalContent(
+    {
+      ...base,
+      talkingPointsByCategory: {
+        news: [],
+        markets: [],
+        industry: [
+          base.talkingPoints[0] ??
+            `What's your ${params.lensNames.primary} team's take on today's headline?`,
+        ],
+        weather: ["Did the commute weather catch anyone off guard?"],
+        books: [`Have you read anything good for ${params.lensNames.primary} work lately?`],
+        movies: ["Anything good on streaming this weekend?"],
+        clothing_sales: ["Anyone score a good sale on work clothes lately?"],
+        hobbies: base.talkingPoints.slice(0, 2),
+      },
+      modules: sampleModules,
+      meta: {
+        primaryLens: params.lensNames.primary,
+        primaryLensSlug: lensSlug,
+        secondaryLens: params.lensNames.secondary,
+        enabledModules: params.enabledSlugs,
+      },
     },
-    modules: sampleModules,
-    meta: {
-      primaryLens: params.lensNames.primary,
-      secondaryLens: params.lensNames.secondary,
-      enabledModules: params.enabledSlugs,
+    lensSlug,
+    params.lensNames.primary
+  );
+
+  sample = {
+    ...sample,
+    marketsMeta: {
+      ...SAMPLE_MARKETS_META,
+      builtAt: new Date().toISOString(),
     },
   };
 
   let out = enrichNewsContent(sample);
+  if (params.enabledSlugs.includes("markets")) {
+    out = enrichMarketsContent(out, { lensLabel: params.lensNames.primary });
+  }
   if (params.enabledSlugs.includes("talking_points")) {
     out = anchorTalkingPoints(out, {
       lensLabel: params.lensNames.primary,

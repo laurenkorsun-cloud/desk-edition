@@ -56,6 +56,14 @@ export type ModuleBlock = {
   data?: Record<string, unknown>;
 };
 
+export type MarketsMeta = {
+  pulse?: string;
+  /** Beginner-friendly intro — preferred over pulse when set */
+  intro?: string;
+  watchItems: string[];
+  builtAt?: string;
+};
+
 export type PersonalEditionContent = {
   lede: string;
   sections: import("@/lib/types").Section[];
@@ -63,9 +71,11 @@ export type PersonalEditionContent = {
   talkingPointsByCategory?: Record<string, string[]>;
   emailBullets: string[];
   modules: ModuleBlock[];
+  marketsMeta?: MarketsMeta;
   editionNumber?: number;
   meta: {
     primaryLens: string;
+    primaryLensSlug?: string | null;
     secondaryLens: string | null;
     enabledModules: string[];
   };

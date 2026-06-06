@@ -2,9 +2,11 @@
 
 import type { ReactNode } from "react";
 import { TalkingPointsColumn } from "./TalkingPointsColumn";
+import { TalkingPointsBox } from "./TalkingPointsBox";
 
 type Props = {
   title: string;
+  subtitle?: string;
   icon?: string;
   children: ReactNode;
   talkingPoints: string[];
@@ -16,6 +18,7 @@ type Props = {
 
 export function CategoryPageLayout({
   title,
+  subtitle,
   children,
   talkingPoints,
   category,
@@ -26,10 +29,15 @@ export function CategoryPageLayout({
   return (
     <div className="flex flex-col gap-8 lg:flex-row lg:gap-12">
       <div className="min-w-0 flex-1">
-        <header className="mb-10">
+        <header className="mb-10 border-b border-[var(--briefing-ink)]/[0.06] pb-8">
           <h1 className="font-display text-3xl text-[var(--briefing-ink)] md:text-4xl">
             <span className="text-[var(--briefing-green)]">●</span> {title}
           </h1>
+          {subtitle && (
+            <p className="mt-3 max-w-2xl font-sans text-sm leading-relaxed text-[var(--briefing-muted)]">
+              {subtitle}
+            </p>
+          )}
         </header>
         {children}
       </div>
@@ -41,21 +49,16 @@ export function CategoryPageLayout({
         onUnbookmark={onUnbookmark}
       />
       {talkingPoints.length > 0 && (
-        <section className="mt-10 border-l-2 border-[var(--briefing-green)] pl-4 lg:hidden">
-          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--briefing-muted)]">
-            Talking points
-          </p>
-          <p className="mt-1 font-sans text-[10px] text-[var(--briefing-muted)]">
-            Based on today&apos;s stories in this section
-          </p>
-          <ul className="mt-3 space-y-3">
-            {talkingPoints.map((p, i) => (
-              <li key={i} className="font-sans text-sm leading-relaxed">
-                {p}
-              </li>
-            ))}
-          </ul>
-        </section>
+        <div className="mt-10 lg:hidden">
+          <TalkingPointsBox
+            points={talkingPoints}
+            subtitle="Based on today's stories in this section"
+            category={category}
+            onBookmarkPoint={onBookmarkPoint}
+            isBookmarked={isBookmarked}
+            onUnbookmark={onUnbookmark}
+          />
+        </div>
       )}
     </div>
   );
